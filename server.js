@@ -1,25 +1,18 @@
 'use strict';
-require('dotenv').config();
+const dotenv = require('dotenv').config();
 const express = require('express');
 const myDB = require('./connection');
 const fccTesting = require('./freeCodeCamp/fcctesting.js');
 const session = require('express-session');
 const passport = require('passport');
 const { ObjectID } = require('mongodb');
-
 const app = express();
 
 // Setup pug view engine
 app.set('view engine', 'pug');
 app.set('views', './views/pug');
 
-fccTesting(app); //For FCC testing purposes
-app.use('/public', express.static(process.cwd() + '/public'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 // Check .env files
-console.log(process.env);
 
 // Setting up passport
 app.use(session({
@@ -32,6 +25,14 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Serialize and Deserialize
+// passport.serializeUser(cb);
+// passport.deserializeUser(cb);
+
+fccTesting(app); //For FCC testing purposes
+app.use('/public', express.static(process.cwd() + '/public'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // API routes
 app.route('/').get((req, res) => {

@@ -10,11 +10,9 @@ const LocalStrategy = require('passport-local');
 
 const app = express();
 
-// Setup pug view engine
 app.set('view engine', 'pug');
 app.set('views', './views/pug');
 
-// Setting up passport
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: true,
@@ -30,7 +28,6 @@ app.use('/public', express.static(process.cwd() + '/public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// DB Connection
 myDB(async client => {
   const myDataBase = await client.db('database').collection('users');
 
@@ -38,23 +35,29 @@ myDB(async client => {
     res.render('index', {
       title: 'Connected to Database',
       message: 'Please log in',
-      showLogin: true,
-      showRegistration: true
+      showLogin: true
     });
   });
 
   app.route('/login').post(passport.authenticate('local', { failureRedirect: '/' }), (req, res) => {
-    req.logout();
     res.redirect('/profile');
-  })
-
-  app
-    .route('/profile')
-    .get(ensureAuthenticated, (req,res) => {
-      res.render('profile', { username : req.user.username});
   });
 
-  // Check if user is logging in correctly
+  app.route('/profile').get(ensureAuthenticated, (req,res) => {
+    res.render('profile', { username: req.user.username });
+  });
+
+  app.route('/logout').get((req, res) => {
+    req.logout();
+    res.redirect('/');
+  });
+
+  app.use((req, res, next) => {
+    res.status(404)
+      .type('text')
+      .send('Not Found');
+  });
+
   passport.use(new LocalStrategy((username, password, done) => {
     myDataBase.findOne({ username: username }, (err, user) => {
       console.log(`User ${username} attempted to log in.`);
@@ -81,17 +84,15 @@ myDB(async client => {
   });
 });
 
-// Middleware Function Implementation
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
   }
-  res.redirect('/')
-}
-
-
-// Host information
+  res.redirect('/');
+};
+  
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || "127.0.0.1";
 app.listen(PORT, () => {
-  console.log(`Listening on port ${PORT}`);
+  console.log(`Listening on port ${HOST}:${PORT}`);
 });
